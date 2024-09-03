@@ -104,10 +104,6 @@ To add support for additional shipping companies:
 - For API-related errors, check that your API keys are valid and properly set in `config.py`.
 - If the HTTP API is not responding, ensure that the Flask server is running and there are no port conflicts.
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## License
 
 Private Lisensi buat Aris dan Tiyo
