@@ -33,9 +33,41 @@ This project is a Python-based scraper that collects shipping cost data from mul
 
 ## Configuration
 
-Edit the `config.py` file to set up your MySQL connection and API keys:
+The project uses a configuration file `config.py` for setting up MySQL connection and API keys. For production environments, you can create a `config_production.py` file with production-specific settings.
 
+1. For development, edit the `config.py` file directly:
 
+   ```python
+   MYSQL_CONFIG = {
+       'host': 'localhost',
+       'user': 'your_username',
+       'password': 'your_password',
+       'database': 'shipping_costs_db'
+   }
+
+   API_KEYS = {
+       'fastship': 'your_fastship_api_key'
+   }
+   ```
+
+2. For production, create a `config_production.py` file with the same structure:
+
+   ```python
+   MYSQL_CONFIG = {
+       'host': 'production_host',
+       'user': 'production_username',
+       'password': 'production_password',
+       'database': 'production_database'
+   }
+
+   API_KEYS = {
+       'fastship': 'production_fastship_api_key'
+   }
+   ```
+
+   The `config.py` file will automatically use these production settings if `config_production.py` exists.
+
+Note: Make sure to add `config_production.py` to your `.gitignore` file to keep sensitive production data out of version control.
 
 ## Usage
 
@@ -103,6 +135,35 @@ To add support for additional shipping companies:
 - If you encounter database connection issues, make sure your MySQL server is running and the credentials in `config.py` are correct.
 - For API-related errors, check that your API keys are valid and properly set in `config.py`.
 - If the HTTP API is not responding, ensure that the Flask server is running and there are no port conflicts.
+
+## Initializing Data
+
+After setting up the database, you can insert initial data for all Indonesian provinces, cities, regencies, districts, and villages:
+
+1. Ensure you have the `requests` library installed:
+   ```
+   pip install requests
+   ```
+
+2. Run the data initialization script:
+   ```
+   python insert_initial_data.py
+   ```
+
+This script will:
+- Fetch up-to-date data from the emsifa API
+- Populate the `origins` table with a complete set of administrative divisions in Indonesia, including:
+  - Provinces
+  - Cities
+  - Regencies (Kabupaten)
+  - Districts (Kecamatan)
+  - Villages (Desa/Kelurahan)
+
+The data is structured hierarchically, with each entry having a `parent_id` that references its parent division.
+
+Note: This process may take several minutes due to the large amount of data being inserted.
+
+If you encounter any issues related to packet size, you may need to increase the `max_allowed_packet` size in your MySQL configuration. Contact your database administrator or refer to MySQL documentation for guidance on this setting.
 
 ## License
 

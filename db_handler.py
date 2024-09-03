@@ -18,13 +18,13 @@ class DatabaseHandler:
     def create_tables(self):
         cursor = self.connection.cursor()
         try:
-            # Create origins table (unchanged)
+            # Create origins table (updated to include 'village')
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS origins (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    id VARCHAR(20) PRIMARY KEY,
                     name VARCHAR(100) NOT NULL,
-                    type ENUM('province', 'city', 'regency') NOT NULL,
-                    parent_id INT,
+                    type ENUM('province', 'city', 'regency', 'district', 'village') NOT NULL,
+                    parent_id VARCHAR(20),
                     FOREIGN KEY (parent_id) REFERENCES origins(id)
                 )
             """)

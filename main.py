@@ -7,26 +7,15 @@ def run_scraper():
     db = DatabaseHandler()
     fastship_handler = FastShipHandler(API_KEYS['fastship'])
 
-    # Example origins and destinations
-    origins = [
-        {'name': 'DKI Jakarta', 'type': 'province', 'parent_id': None},
-        {'name': 'Jakarta', 'type': 'city', 'parent_id': 1},
-        {'name': 'East Java', 'type': 'province', 'parent_id': None},
-        {'name': 'Surabaya', 'type': 'city', 'parent_id': 3},
-    ]
-    
-    destinations = [
-        {'name': 'West Java', 'type': 'province', 'parent_id': None},
-        {'name': 'Bandung', 'type': 'city', 'parent_id': 5},
-        {'name': 'North Sumatra', 'type': 'province', 'parent_id': None},
-        {'name': 'Medan', 'type': 'city', 'parent_id': 7},
-    ]
-
     try:
+        # Fetch origins and destinations from the database
+        origins = fetch_locations(db, ['city', 'regency'])
+        destinations = fetch_locations(db, ['city', 'regency'])
+
         for origin in origins:
             for destination in destinations:
                 # Skip if origin and destination are the same
-                if origin['name'] == destination['name']:
+                if origin['id'] == destination['id']:
                     continue
 
                 # Example weight in kg
@@ -39,7 +28,7 @@ def run_scraper():
                 )
 
                 if shipping_costs:
-                    save_shipping_costs(db, origin, destination, 'FastShip', shipping_costs)
+                    save_shipping_costs(db, origin['id'], destination['id'], 'FastShip', shipping_costs)
 
                 # Add a small delay to avoid overwhelming the API
                 time.sleep(1)
@@ -48,31 +37,22 @@ def run_scraper():
         fastship_handler.close_session()
         db.close_connection()
 
-def save_shipping_costs(db, origin, destination, expedition, shipping_costs):
+def fetch_locations(db, types):
+    cursor = db.connection.cursor(dictionary=True)
+    try:
+        type_placeholders = ', '.join(['%s'] * len(types))
+        cursor.execute(f"""
+            SELECT id, name, type, parent_id
+            FROM origins
+            WHERE type IN ({type_placeholders})
+        """, types)
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+
+def save_shipping_costs(db, origin_id, destination_id, expedition, shipping_costs):
     cursor = db.connection.cursor()
     try:
-        # Insert or get origin
-        cursor.execute(
-            "INSERT IGNORE INTO origins (name, type, parent_id) VALUES (%s, %s, %s)",
-            (origin['name'], origin['type'], origin['parent_id'])
-        )
-        cursor.execute(
-            "SELECT id FROM origins WHERE name = %s AND type = %s",
-            (origin['name'], origin['type'])
-        )
-        origin_id = cursor.fetchone()[0]
-
-        # Insert or get destination
-        cursor.execute(
-            "INSERT IGNORE INTO origins (name, type, parent_id) VALUES (%s, %s, %s)",
-            (destination['name'], destination['type'], destination['parent_id'])
-        )
-        cursor.execute(
-            "SELECT id FROM origins WHERE name = %s AND type = %s",
-            (destination['name'], destination['type'])
-        )
-        destination_id = cursor.fetchone()[0]
-
         # Insert or get expedition
         cursor.execute(
             "INSERT IGNORE INTO expeditions (name) VALUES (%s)",
